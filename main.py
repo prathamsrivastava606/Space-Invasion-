@@ -12,6 +12,9 @@ pygame.display.set_caption(TITLE)
 
 clock = pygame.time.Clock()
 
+# Font for score
+font = pygame.font.SysFont("Arial", 32)
+
 player = Player()
 
 # -------------------------
@@ -69,7 +72,6 @@ while running:
     for enemy in enemies:
         enemy.update(enemy_speed)
 
-    # Enemy movement
     hit_edge = False
 
     for enemy in enemies:
@@ -86,7 +88,7 @@ while running:
             enemy.y += enemy_drop
 
     # -------------------------
-    # COLLISION DETECTION
+    # Collision
     # -------------------------
 
     for bullet in player.bullets[:]:
@@ -108,10 +110,16 @@ while running:
 
     screen.fill(BLACK)
 
+    # Draw enemies
     for enemy in enemies:
         enemy.draw(screen)
 
+    # Draw player
     player.draw(screen)
+
+    # Draw score
+    score_text = font.render(f"Score : {score}", True, WHITE)
+    screen.blit(score_text, (20, 20))
 
     pygame.display.flip()
 
