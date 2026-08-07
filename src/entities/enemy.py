@@ -19,12 +19,24 @@ class Enemy:
 
         self.x += direction
 
+    def shoot(self):
+
+        return (
+            self.x + self.width // 2,
+            self.y + self.height
+        )
+
     def draw(self, screen):
 
         pygame.draw.rect(
             screen,
             self.color,
-            (self.x, self.y, self.width, self.height)
+            (
+                self.x,
+                self.y,
+                self.width,
+                self.height
+            )
         )
 
     def get_rect(self):

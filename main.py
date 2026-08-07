@@ -4,6 +4,8 @@ import sys
 from settings import *
 from src.entities.player import Player
 from src.entities.enemy import Enemy
+from src.entities.enemy_bullet import EnemyBullet
+import random
 
 pygame.init()
 
@@ -46,6 +48,7 @@ def reset_game():
     global enemy_speed
     global score
     global lives
+    global enemy_bullets
 
     player = Player()
     enemies = create_enemies()
@@ -54,6 +57,11 @@ def reset_game():
 
     score = 0
     lives = 3
+
+enemy_bullets = []
+
+ENEMY_SHOOT_EVENT = pygame.USEREVENT + 1
+pygame.time.set_timer(ENEMY_SHOOT_EVENT, 1000)
 
 
 player = Player()
