@@ -5,15 +5,19 @@ from settings import *
 
 class Enemy:
 
-    def __init__(self):
+    def __init__(self, x, y):
 
         self.width = 60
         self.height = 60
 
-        self.x = WIDTH // 2 - self.width // 2
-        self.y = 80
+        self.x = x
+        self.y = y
 
         self.color = (0, 255, 0)
+
+    def update(self, direction):
+
+        self.x += direction
 
     def draw(self, screen):
 
