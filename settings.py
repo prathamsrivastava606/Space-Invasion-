@@ -27,3 +27,9 @@ BULLET_SPEED = 10
 # Enemy
 ENEMY_WIDTH = 60
 ENEMY_HEIGHT = 60
+
+# Enemy Bullet
+ENEMY_BULLET_SPEED = 6
+
+# Extra Colors
+YELLOW = (255, 255, 0)
