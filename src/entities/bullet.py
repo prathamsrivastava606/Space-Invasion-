@@ -26,12 +26,16 @@ class Bullet:
         pygame.draw.rect(
             screen,
             self.color,
-            (
-                self.x,
-                self.y,
-                self.width,
-                self.height
-            )
+            (self.x, self.y, self.width, self.height)
+        )
+
+    def get_rect(self):
+
+        return pygame.Rect(
+            self.x,
+            self.y,
+            self.width,
+            self.height
         )
 
     def off_screen(self):

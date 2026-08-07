@@ -7,13 +7,13 @@ class Enemy:
 
     def __init__(self, x, y):
 
-        self.width = 60
-        self.height = 60
+        self.width = ENEMY_WIDTH
+        self.height = ENEMY_HEIGHT
 
         self.x = x
         self.y = y
 
-        self.color = (0, 255, 0)
+        self.color = GREEN
 
     def update(self, direction):
 
@@ -24,10 +24,14 @@ class Enemy:
         pygame.draw.rect(
             screen,
             self.color,
-            (
-                self.x,
-                self.y,
-                self.width,
-                self.height
-            )
+            (self.x, self.y, self.width, self.height)
+        )
+
+    def get_rect(self):
+
+        return pygame.Rect(
+            self.x,
+            self.y,
+            self.width,
+            self.height
         )

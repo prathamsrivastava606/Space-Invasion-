@@ -40,6 +40,8 @@ for row in range(ROWS):
 enemy_speed = 2
 enemy_drop = 40
 
+score = 0
+
 running = True
 
 while running:
@@ -67,7 +69,7 @@ while running:
     for enemy in enemies:
         enemy.update(enemy_speed)
 
-    # Check if formation hits an edge
+    # Enemy movement
     hit_edge = False
 
     for enemy in enemies:
@@ -82,6 +84,23 @@ while running:
 
         for enemy in enemies:
             enemy.y += enemy_drop
+
+    # -------------------------
+    # COLLISION DETECTION
+    # -------------------------
+
+    for bullet in player.bullets[:]:
+
+        for enemy in enemies[:]:
+
+            if bullet.get_rect().colliderect(enemy.get_rect()):
+
+                player.bullets.remove(bullet)
+                enemies.remove(enemy)
+
+                score += 10
+
+                break
 
     # -------------------------
     # Draw
