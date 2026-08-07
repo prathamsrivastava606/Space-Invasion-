@@ -73,6 +73,11 @@ enemy_drop = 40
 score = 0
 lives = 3
 
+enemy_bullets = []
+ENEMY_SHOOT_EVENT = pygame.USEREVENT + 1
+pygame.time.set_timer(ENEMY_SHOOT_EVENT, 1000)
+
+
 running = True
 
 while running:
@@ -90,9 +95,25 @@ while running:
             if event.key == pygame.K_r:
                 reset_game()
 
+        if event.type == ENEMY_SHOOT_EVENT and len(enemies) > 0:
+
+            shooter = random.choice(enemies)
+
+            x, y = shooter.shoot()
+
+            enemy_bullets.append(
+                EnemyBullet(x, y)
+        )
+
     if len(enemies) > 0:
 
         player.update()
+        for bullet in enemy_bullets[:]:
+
+            bullet.update()
+
+            if bullet.off_screen():
+                enemy_bullets.remove(bullet)
 
         for enemy in enemies:
             enemy.update(enemy_speed)
@@ -133,6 +154,9 @@ while running:
         enemy.draw(screen)
 
     player.draw(screen)
+
+    for bullet in enemy_bullets:
+        bullet.draw(screen)
 
     score_text = font.render(f"Score : {score}", True, WHITE)
     screen.blit(score_text, (20, 20))
