@@ -114,6 +114,19 @@ while running:
 
             if bullet.off_screen():
                 enemy_bullets.remove(bullet)
+            player_rect = pygame.Rect(
+                player.x,
+                player.y,
+                player.width,
+                player.height
+        )
+
+        for bullet in enemy_bullets[:]:
+
+            if bullet.get_rect().colliderect(player_rect):
+
+                enemy_bullets.remove(bullet)
+                lives -= 1
 
         for enemy in enemies:
             enemy.update(enemy_speed)
