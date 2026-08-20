@@ -5,6 +5,7 @@ from settings import *
 from src.entities.player import Player
 from src.entities.enemy import Enemy
 from src.entities.enemy_bullet import EnemyBullet
+from src.core.formation import create_grid, create_triangle, create_diamond, create_v, create_cross, create_arrow, create_hollow_rectangle
 
 
 class Game:
@@ -26,11 +27,12 @@ class Game:
 
         self.score = 0
         self.lives = 3
+        self.wave = 1
         self.game_over = False
 
         self.enemy_bullets = []
 
-        self.enemies = self.create_enemies()
+        self.enemies = create_grid()
         self.player = Player()
 
         self.ENEMY_SHOOT_EVENT = pygame.USEREVENT + 1
@@ -38,40 +40,34 @@ class Game:
 
         self.running = True
 
-    def create_enemies(self):
-
-        enemies = []
-
-        ROWS = 2
-        COLUMNS = 7
-
-        START_X = 180
-        START_Y = 80
-
-        GAP_X = 100
-        GAP_Y = 90
-
-        for row in range(ROWS):
-            for col in range(COLUMNS):
-
-                x = START_X + col * GAP_X
-                y = START_Y + row * GAP_Y
-
-                enemies.append(Enemy(x, y))
-
-        return enemies
-
     def reset_game(self):
 
         self.player = Player()
-        self.enemies = self.create_enemies()
+        self.enemies = create_grid()
 
         self.enemy_speed = 2
 
         self.score = 0
         self.lives = 3
+        self.wave = 1
         self.enemy_bullets = []
         self.game_over = False
+
+    def create_wave(self):
+
+        formations = [
+            create_grid,
+            create_triangle,
+            create_diamond,
+            create_v,
+            create_cross,
+            create_arrow,
+            create_hollow_rectangle
+        ]
+
+        formation = formations[(self.wave - 1) % len(formations)]
+
+        return formation()
 
     def handle_events(self):
 
@@ -90,29 +86,51 @@ class Game:
 
             if event.type == self.ENEMY_SHOOT_EVENT and len(self.enemies) > 0 and not self.game_over:
 
-                columns = {}
+                shooters = []
 
                 for enemy in self.enemies:
 
-                    column = round((enemy.x - 180) / 100)
+                    enemy_rect = enemy.get_rect()
+                    blocked = False
 
-                    if column not in columns or enemy.y > columns[column].y:
-                        columns[column] = enemy
+                    for other in self.enemies:
 
-                shooters = random.sample(
-                    list(columns.values()),
-                    min(3, len(columns))
-                )
+                        if other == enemy:
+                            continue
 
-                for shooter in shooters:
+                        other_rect = other.get_rect()
 
-                    x, y = shooter.shoot()
+                        if other_rect.y > enemy_rect.y:
 
-                    self.enemy_bullets.append(
-                        EnemyBullet(x, y)
+                            if enemy_rect.right > other_rect.left and enemy_rect.left < other_rect.right:
+                                blocked = True
+                                break
+
+                    if not blocked:
+                        shooters.append(enemy)
+
+                if len(shooters) > 0:
+
+                    selected_shooters = random.sample(
+                        shooters,
+                        min(3, len(shooters))
                     )
 
+                    for shooter in selected_shooters:
+
+                        x, y = shooter.shoot()
+
+                        self.enemy_bullets.append(
+                            EnemyBullet(x, y)
+                        )
+
     def update(self):
+
+        if len(self.enemies) == 0 and not self.game_over:
+
+            self.wave += 1
+            self.enemies = self.create_wave()
+            self.enemy_speed = 2 + (self.wave - 1) * 0.3
 
         if len(self.enemies) > 0 and not self.game_over:
 
@@ -206,35 +224,13 @@ class Game:
 
         self.screen.blit(lives_text, (20, 60))
 
-        if len(self.enemies) == 0 and not self.game_over:
+        wave_text = self.font.render(
+            f"Wave : {self.wave}",
+            True,
+            WHITE
+        )
 
-            win_text = self.big_font.render(
-                "YOU WIN!",
-                True,
-                (0, 255, 0)
-            )
-
-            restart_text = self.font.render(
-                "Press R to Restart",
-                True,
-                WHITE
-            )
-
-            self.screen.blit(
-                win_text,
-                (
-                    WIDTH // 2 - win_text.get_width() // 2,
-                    HEIGHT // 2 - 70
-                )
-            )
-
-            self.screen.blit(
-                restart_text,
-                (
-                    WIDTH // 2 - restart_text.get_width() // 2,
-                    HEIGHT // 2 + 10
-                )
-            )
+        self.screen.blit(wave_text, (20, 100))
 
         if self.game_over:
 
