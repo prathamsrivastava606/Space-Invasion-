@@ -96,13 +96,27 @@ while running:
 
         if event.type == ENEMY_SHOOT_EVENT and len(enemies) > 0 and not game_over:
 
-            shooter = random.choice(enemies)
+            columns = {}
 
-            x, y = shooter.shoot()
+            for enemy in enemies:
 
-            enemy_bullets.append(
-                EnemyBullet(x, y)
-            )
+                column = round((enemy.x - 180) / 100)
+
+                if column not in columns or enemy.y > columns[column].y:
+                    columns[column] = enemy
+
+            shooters = random.sample(
+                list(columns.values()),
+                    min(3, len(columns))
+                )
+
+            for shooter in shooters:
+
+                x, y = shooter.shoot()
+
+                enemy_bullets.append(
+                    EnemyBullet(x, y)
+                )
 
     if len(enemies) > 0 and not game_over:
 
