@@ -1,11 +1,11 @@
 import pygame
 import sys
+import random
 
 from settings import *
 from src.entities.player import Player
 from src.entities.enemy import Enemy
 from src.entities.enemy_bullet import EnemyBullet
-import random
 
 pygame.init()
 
@@ -49,6 +49,7 @@ def reset_game():
     global score
     global lives
     global enemy_bullets
+    global game_over
 
     player = Player()
     enemies = create_enemies()
@@ -57,11 +58,8 @@ def reset_game():
 
     score = 0
     lives = 3
-
-enemy_bullets = []
-
-ENEMY_SHOOT_EVENT = pygame.USEREVENT + 1
-pygame.time.set_timer(ENEMY_SHOOT_EVENT, 1000)
+    enemy_bullets = []
+    game_over = False
 
 
 player = Player()
@@ -72,11 +70,12 @@ enemy_drop = 40
 
 score = 0
 lives = 3
+game_over = False
 
 enemy_bullets = []
+
 ENEMY_SHOOT_EVENT = pygame.USEREVENT + 1
 pygame.time.set_timer(ENEMY_SHOOT_EVENT, 1000)
-
 
 running = True
 
@@ -89,13 +88,13 @@ while running:
 
         if event.type == pygame.KEYDOWN:
 
-            if event.key == pygame.K_SPACE and len(enemies) > 0:
+            if event.key == pygame.K_SPACE and len(enemies) > 0 and not game_over:
                 player.shoot()
 
             if event.key == pygame.K_r:
                 reset_game()
 
-        if event.type == ENEMY_SHOOT_EVENT and len(enemies) > 0:
+        if event.type == ENEMY_SHOOT_EVENT and len(enemies) > 0 and not game_over:
 
             shooter = random.choice(enemies)
 
@@ -103,22 +102,24 @@ while running:
 
             enemy_bullets.append(
                 EnemyBullet(x, y)
-        )
+            )
 
-    if len(enemies) > 0:
+    if len(enemies) > 0 and not game_over:
 
         player.update()
+
         for bullet in enemy_bullets[:]:
 
             bullet.update()
 
             if bullet.off_screen():
                 enemy_bullets.remove(bullet)
-            player_rect = pygame.Rect(
-                player.x,
-                player.y,
-                player.width,
-                player.height
+
+        player_rect = pygame.Rect(
+            player.x,
+            player.y,
+            player.width,
+            player.height
         )
 
         for bullet in enemy_bullets[:]:
@@ -126,7 +127,13 @@ while running:
             if bullet.get_rect().colliderect(player_rect):
 
                 enemy_bullets.remove(bullet)
+
                 lives -= 1
+
+                if lives <= 0:
+                    lives = 0
+                    game_over = True
+                    break
 
         for enemy in enemies:
             enemy.update(enemy_speed)
@@ -177,7 +184,7 @@ while running:
     lives_text = font.render(f"Lives : {'❤' * lives}", True, WHITE)
     screen.blit(lives_text, (20, 60))
 
-    if len(enemies) == 0:
+    if len(enemies) == 0 and not game_over:
 
         win_text = big_font.render("YOU WIN!", True, (0, 255, 0))
         restart_text = font.render("Press R to Restart", True, WHITE)
@@ -186,6 +193,27 @@ while running:
             win_text,
             (
                 WIDTH // 2 - win_text.get_width() // 2,
+                HEIGHT // 2 - 70
+            )
+        )
+
+        screen.blit(
+            restart_text,
+            (
+                WIDTH // 2 - restart_text.get_width() // 2,
+                HEIGHT // 2 + 10
+            )
+        )
+
+    if game_over:
+
+        game_over_text = big_font.render("GAME OVER", True, (255, 0, 0))
+        restart_text = font.render("Press R to Restart", True, WHITE)
+
+        screen.blit(
+            game_over_text,
+            (
+                WIDTH // 2 - game_over_text.get_width() // 2,
                 HEIGHT // 2 - 70
             )
         )
