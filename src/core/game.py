@@ -38,6 +38,10 @@ class Game:
         self.ENEMY_SHOOT_EVENT = pygame.USEREVENT + 1
         pygame.time.set_timer(self.ENEMY_SHOOT_EVENT, 1000)
 
+        self.wave_transition = True
+        self.wave_transition_time = 2000
+        self.wave_start_time = pygame.time.get_ticks()
+
         self.running = True
 
     def reset_game(self):
@@ -52,6 +56,9 @@ class Game:
         self.wave = 1
         self.enemy_bullets = []
         self.game_over = False
+
+        self.wave_transition = True
+        self.wave_start_time = pygame.time.get_ticks()
 
     def create_wave(self):
 
@@ -78,13 +85,13 @@ class Game:
 
             if event.type == pygame.KEYDOWN:
 
-                if event.key == pygame.K_SPACE and len(self.enemies) > 0 and not self.game_over:
+                if event.key == pygame.K_SPACE and len(self.enemies) > 0 and not self.game_over and not self.wave_transition:
                     self.player.shoot()
 
                 if event.key == pygame.K_r:
                     self.reset_game()
 
-            if event.type == self.ENEMY_SHOOT_EVENT and len(self.enemies) > 0 and not self.game_over:
+            if event.type == self.ENEMY_SHOOT_EVENT and len(self.enemies) > 0 and not self.game_over and not self.wave_transition:
 
                 shooters = []
 
@@ -126,11 +133,26 @@ class Game:
 
     def update(self):
 
+        if self.wave_transition:
+
+            if pygame.time.get_ticks() - self.wave_start_time >= self.wave_transition_time:
+
+                self.wave_transition = False
+
+            return
+
         if len(self.enemies) == 0 and not self.game_over:
 
             self.wave += 1
             self.enemies = self.create_wave()
             self.enemy_speed = 2 + (self.wave - 1) * 0.3
+
+            self.wave_transition = True
+            self.wave_start_time = pygame.time.get_ticks()
+
+            self.enemy_bullets = []
+
+            return
 
         if len(self.enemies) > 0 and not self.game_over:
 
@@ -159,6 +181,7 @@ class Game:
                     self.lives -= 1
 
                     if self.lives <= 0:
+
                         self.lives = 0
                         self.game_over = True
                         break
@@ -231,6 +254,22 @@ class Game:
         )
 
         self.screen.blit(wave_text, (20, 100))
+
+        if self.wave_transition and not self.game_over:
+
+            wave_text = self.big_font.render(
+                f"WAVE {self.wave}",
+                True,
+                WHITE
+            )
+
+            self.screen.blit(
+                wave_text,
+                (
+                    WIDTH // 2 - wave_text.get_width() // 2,
+                    HEIGHT // 2 - 50
+                )
+            )
 
         if self.game_over:
 
