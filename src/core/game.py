@@ -21,6 +21,7 @@ class Game:
 
         self.font = pygame.font.SysFont("Arial", 32)
         self.big_font = pygame.font.SysFont("Arial", 64)
+        self.small_font = pygame.font.SysFont("Arial", 24)
 
         self.enemy_speed = 2
         self.enemy_drop = 40
@@ -257,17 +258,50 @@ class Game:
 
         if self.wave_transition and not self.game_over:
 
+            elapsed = pygame.time.get_ticks() - self.wave_start_time
+            progress = elapsed / self.wave_transition_time
+
+            if progress > 1:
+                progress = 1
+
+            if progress < 0.5:
+                fade = progress * 2
+            else:
+                fade = (1 - progress) * 2
+
+            alpha = int(255 * fade)
+
+            overlay = pygame.Surface((WIDTH, HEIGHT))
+            overlay.fill(BLACK)
+
             wave_text = self.big_font.render(
                 f"WAVE {self.wave}",
                 True,
                 WHITE
             )
 
+            ready_text = self.small_font.render(
+                "GET READY...",
+                True,
+                WHITE
+            )
+
+            wave_text.set_alpha(alpha)
+            ready_text.set_alpha(alpha)
+
             self.screen.blit(
                 wave_text,
                 (
                     WIDTH // 2 - wave_text.get_width() // 2,
-                    HEIGHT // 2 - 50
+                    HEIGHT // 2 - 70
+                )
+            )
+
+            self.screen.blit(
+                ready_text,
+                (
+                    WIDTH // 2 - ready_text.get_width() // 2,
+                    HEIGHT // 2 + 10
                 )
             )
 
