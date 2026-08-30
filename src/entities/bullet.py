@@ -5,17 +5,28 @@ from settings import *
 
 class Bullet:
 
+    image = None
+
+    width = 30
+    height = 50
+
     def __init__(self, x, y):
 
-        self.width = BULLET_WIDTH
-        self.height = BULLET_HEIGHT
+        if Bullet.image is None:
 
-        self.x = x
-        self.y = y
+            Bullet.image = pygame.image.load(
+                "assets/images/player_bullet.png"
+            )
+
+            Bullet.image = pygame.transform.smoothscale(
+                Bullet.image,
+                (Bullet.width, Bullet.height)
+            )
+
+        self.x = x - self.width // 2
+        self.y = y - self.height
 
         self.speed = BULLET_SPEED
-
-        self.color = RED
 
     def update(self):
 
@@ -23,10 +34,9 @@ class Bullet:
 
     def draw(self, screen):
 
-        pygame.draw.rect(
-            screen,
-            self.color,
-            (self.x, self.y, self.width, self.height)
+        screen.blit(
+            Bullet.image,
+            (self.x, self.y)
         )
 
     def get_rect(self):
