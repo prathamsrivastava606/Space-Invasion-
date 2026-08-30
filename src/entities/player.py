@@ -15,7 +15,18 @@ class Player:
         self.y = HEIGHT - 100
 
         self.speed = PLAYER_SPEED
-        self.color = WHITE
+
+        self.image = pygame.image.load(
+            "assets/images/playerShip1_blue.png"
+        ).convert_alpha()
+
+        self.image = pygame.transform.scale(
+            self.image,
+            (
+                self.width,
+                self.height
+            )
+        )
 
         self.bullets = []
 
@@ -54,14 +65,11 @@ class Player:
 
     def draw(self, screen):
 
-        pygame.draw.rect(
-            screen,
-            self.color,
+        screen.blit(
+            self.image,
             (
                 self.x,
-                self.y,
-                self.width,
-                self.height
+                self.y
             )
         )
 

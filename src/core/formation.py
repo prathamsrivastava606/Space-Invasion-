@@ -1,8 +1,26 @@
 from settings import *
 from src.entities.enemy import Enemy
+import random
 
 
-def create_grid():
+SHIP_TYPES = [
+    "enemyBlack3",
+    "enemyBlue3",
+    "enemyGreen3",
+    "enemyRed3"
+]
+
+
+def get_ship_type(ship_types):
+
+    if isinstance(ship_types, str):
+        return ship_types
+
+    return random.choice(ship_types)
+
+
+def create_grid(ship_types="enemyBlack3"):
+
     enemies = []
 
     rows = 2
@@ -15,17 +33,25 @@ def create_grid():
     gap_y = 90
 
     for row in range(rows):
+
         for col in range(columns):
 
             x = start_x + col * gap_x
             y = start_y + row * gap_y
 
-            enemies.append(Enemy(x, y))
+            enemies.append(
+                Enemy(
+                    x,
+                    y,
+                    get_ship_type(ship_types)
+                )
+            )
 
     return enemies
 
 
-def create_triangle():
+def create_triangle(ship_types="enemyBlue3"):
+
     enemies = []
 
     start_x = 330
@@ -41,12 +67,19 @@ def create_triangle():
             x = start_x + (col - row / 2) * gap_x
             y = start_y + row * gap_y
 
-            enemies.append(Enemy(x, y))
+            enemies.append(
+                Enemy(
+                    x,
+                    y,
+                    get_ship_type(ship_types)
+                )
+            )
 
     return enemies
 
 
-def create_diamond():
+def create_diamond(ship_types="enemyGreen3"):
+
     enemies = []
 
     start_x = 360
@@ -70,12 +103,19 @@ def create_diamond():
             x = start_x + (col - (count - 1) / 2) * gap_x
             y = start_y + row * gap_y
 
-            enemies.append(Enemy(x, y))
+            enemies.append(
+                Enemy(
+                    x,
+                    y,
+                    get_ship_type(ship_types)
+                )
+            )
 
     return enemies
 
 
-def create_v():
+def create_v(ship_types="enemyRed3"):
+
     enemies = []
 
     start_x = 180
@@ -89,21 +129,24 @@ def create_v():
         enemies.append(
             Enemy(
                 start_x + i * gap_x,
-                start_y + i * gap_y
+                start_y + i * gap_y,
+                get_ship_type(ship_types)
             )
         )
 
         enemies.append(
             Enemy(
                 start_x + 720 - i * gap_x,
-                start_y + i * gap_y
+                start_y + i * gap_y,
+                get_ship_type(ship_types)
             )
         )
 
     return enemies
 
 
-def create_cross():
+def create_cross(ship_types=SHIP_TYPES):
+
     enemies = []
 
     center_x = WIDTH // 2
@@ -116,7 +159,8 @@ def create_cross():
         enemies.append(
             Enemy(
                 center_x,
-                start_y + i * gap
+                start_y + i * gap,
+                get_ship_type(ship_types)
             )
         )
 
@@ -125,14 +169,16 @@ def create_cross():
         enemies.append(
             Enemy(
                 center_x - 2 * gap + i * gap,
-                start_y + 2 * gap
+                start_y + 2 * gap,
+                get_ship_type(ship_types)
             )
         )
 
     return enemies
 
 
-def create_arrow():
+def create_arrow(ship_types=SHIP_TYPES):
+
     enemies = []
 
     center_x = WIDTH // 2
@@ -155,20 +201,35 @@ def create_arrow():
             x = center_x + (col - (count - 1) / 2) * gap_x
             y = start_y + row * gap_y
 
-            enemies.append(Enemy(x, y))
+            enemies.append(
+                Enemy(
+                    x,
+                    y,
+                    get_ship_type(ship_types)
+                )
+            )
 
     enemies.append(
-        Enemy(center_x, start_y + 4 * gap_y)
+        Enemy(
+            center_x,
+            start_y + 4 * gap_y,
+            get_ship_type(ship_types)
+        )
     )
 
     enemies.append(
-        Enemy(center_x, start_y + 5 * gap_y)
+        Enemy(
+            center_x,
+            start_y + 5 * gap_y,
+            get_ship_type(ship_types)
+        )
     )
 
     return enemies
 
 
-def create_hollow_rectangle():
+def create_hollow_rectangle(ship_types=SHIP_TYPES):
+
     enemies = []
 
     start_x = 200
@@ -190,7 +251,11 @@ def create_hollow_rectangle():
                 y = start_y + row * gap_y
 
                 enemies.append(
-                    Enemy(x, y)
+                    Enemy(
+                        x,
+                        y,
+                        get_ship_type(ship_types)
+                    )
                 )
 
     return enemies
