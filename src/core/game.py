@@ -10,6 +10,7 @@ from src.entities.explosion import Explosion
 
 from src.core.background import SpaceBackground
 from src.core.hud import HUD
+from src.core.audio import Audio
 
 from src.core.formation import (
     create_grid,
@@ -34,6 +35,13 @@ class Game:
     def __init__(self):
 
         pygame.init()
+
+        # =================================================
+        # AUDIO
+        # =================================================
+
+        self.audio = Audio()
+        self.audio.play_music()
 
         # =================================================
         # WINDOW
@@ -784,5 +792,8 @@ class Game:
             self.draw()
 
             self.clock.tick(FPS)
+
+        # Stop background music before quitting
+        self.audio.stop_music()
 
         pygame.quit()
