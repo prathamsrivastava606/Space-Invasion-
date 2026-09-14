@@ -29,10 +29,7 @@ from src.core.difficulty import (
     get_max_shooters
 )
 
-
-# =========================================================
 # ENEMY EXPLOSION
-# =========================================================
 
 class EnemyExplosion:
 
@@ -105,9 +102,7 @@ class EnemyExplosion:
             int(self.y)
         )
 
-        # =================================================
         # INITIAL FLASH
-        # =================================================
 
         if progress < 0.16:
 
@@ -130,9 +125,7 @@ class EnemyExplosion:
                 radius
             )
 
-        # =================================================
         # FIREBALL
-        # =================================================
 
         if progress < 0.65:
 
@@ -180,9 +173,7 @@ class EnemyExplosion:
                 int(radius * 0.28)
             )
 
-        # =================================================
         # SMOKE
-        # =================================================
 
         if progress > 0.25:
 
@@ -263,9 +254,7 @@ class EnemyExplosion:
                 )
             )
 
-        # =================================================
         # SPARKS + DEBRIS
-        # =================================================
 
         for particle in self.particles:
 
@@ -344,23 +333,18 @@ class EnemyExplosion:
                     )
                 )
 
-
 class Game:
 
     def __init__(self):
 
         pygame.init()
 
-        # =================================================
         # AUDIO
-        # =================================================
 
         self.audio = Audio()
         self.audio.play_music()
 
-        # =================================================
         # WINDOW
-        # =================================================
 
         self.screen = pygame.display.set_mode(
             (WIDTH, HEIGHT),
@@ -379,9 +363,7 @@ class Game:
 
         self.clock = pygame.time.Clock()
 
-        # =================================================
         # FONTS
-        # =================================================
 
         self.font = pygame.font.SysFont(
             "Arial",
@@ -398,27 +380,21 @@ class Game:
             24
         )
 
-        # =================================================
         # BACKGROUND
-        # =================================================
 
         self.background = SpaceBackground(
             WIDTH,
             HEIGHT
         )
 
-        # =================================================
         # HUD
-        # =================================================
 
         self.hud = HUD(
             WIDTH,
             HEIGHT
         )
 
-        # =================================================
         # GAME SETTINGS
-        # =================================================
 
         self.enemy_speed = get_enemy_speed(1)
 
@@ -429,17 +405,14 @@ class Game:
         self.wave = 1
 
         self.game_over = False
+        self.start_screen = True
 
-        # =================================================
         # BULLETS / EFFECTS
-        # =================================================
 
         self.enemy_bullets = []
         self.explosions = []
 
-        # =================================================
         # PLAYER / ENEMIES
-        # =================================================
 
         self.enemies = create_grid(
             "enemyBlack3"
@@ -447,9 +420,7 @@ class Game:
 
         self.player = Player(self.audio)
 
-        # =================================================
         # ENEMY SHOOTING TIMER
-        # =================================================
 
         self.ENEMY_SHOOT_EVENT = pygame.USEREVENT + 1
 
@@ -458,9 +429,7 @@ class Game:
             get_shoot_interval(self.wave)
         )
 
-        # =================================================
         # WAVE TRANSITION
-        # =================================================
 
         self.wave_transition = True
 
@@ -468,16 +437,263 @@ class Game:
 
         self.wave_start_time = pygame.time.get_ticks()
 
-        # =================================================
         # GAME LOOP
-        # =================================================
+
+        # Menu ship textures
+        self.menu_player_image = None
+        self.menu_enemy_image = None
+
+        try:
+            self.menu_player_image = pygame.image.load(
+                "assets/images/playerShip1_blue.png"
+            ).convert_alpha()
+            self.menu_enemy_image = pygame.image.load(
+                "assets/images/enemyBlack3.png"
+            ).convert_alpha()
+
+            self.menu_player_image = pygame.transform.smoothscale(
+                self.menu_player_image,
+                (90, 90)
+            )
+            self.menu_enemy_image = pygame.transform.smoothscale(
+                self.menu_enemy_image,
+                (75, 75)
+            )
+        except (pygame.error, FileNotFoundError):
+            pass
 
         self.running = True
 
+    # START SCREEN
 
-    # =====================================================
+    def start_game(self):
+
+        self.start_screen = False
+        self.reset_game()
+
+    def draw_start_screen(self):
+
+        # Use the exact same animated space background as gameplay.
+        self.background.draw(self.screen)
+
+        center_x = WIDTH // 2
+        mouse_pos = pygame.mouse.get_pos()
+
+        # -------------------------------------------------
+        # DARK SCI-FI OVERLAY
+        # -------------------------------------------------
+
+        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 95))
+        self.screen.blit(overlay, (0, 0))
+
+        # Subtle sci-fi grid texture
+        grid_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+
+        grid_spacing = 45
+
+        for x in range(0, WIDTH, grid_spacing):
+            pygame.draw.line(
+                grid_surface,
+                (70, 150, 190, 28),
+                (x, 0),
+                (x, HEIGHT),
+                1
+            )
+
+        for y in range(0, HEIGHT, grid_spacing):
+            pygame.draw.line(
+                grid_surface,
+                (70, 150, 190, 28),
+                (0, y),
+                (WIDTH, y),
+                1
+            )
+
+        self.screen.blit(grid_surface, (0, 0))
+
+        # -------------------------------------------------
+        # SIDE SHIP TEXTURES
+        # -------------------------------------------------
+
+        if self.menu_player_image:
+            player_rect = self.menu_player_image.get_rect(
+                center=(center_x - 390, HEIGHT // 2 + 20)
+            )
+            self.screen.blit(self.menu_player_image, player_rect)
+
+        if self.menu_enemy_image:
+            enemy_rect = self.menu_enemy_image.get_rect(
+                center=(center_x + 390, HEIGHT // 2 - 20)
+            )
+            self.screen.blit(self.menu_enemy_image, enemy_rect)
+
+        # -------------------------------------------------
+        # TITLE
+        # -------------------------------------------------
+
+        title_shadow = self.big_font.render(
+            "SPACE INVASION", True, (0, 20, 30)
+        )
+        title = self.big_font.render(
+            "SPACE INVASION", True, (180, 235, 255)
+        )
+
+        title_pos = (
+            center_x - title.get_width() // 2,
+            HEIGHT // 2 - 190
+        )
+
+        self.screen.blit(
+            title_shadow,
+            (title_pos[0] + 4, title_pos[1] + 5)
+        )
+        self.screen.blit(title, title_pos)
+
+        # Decorative lines under the title
+        line_y = HEIGHT // 2 - 112
+        pygame.draw.line(
+            self.screen,
+            (80, 190, 230),
+            (center_x - 230, line_y),
+            (center_x - 45, line_y),
+            2
+        )
+        pygame.draw.line(
+            self.screen,
+            (80, 190, 230),
+            (center_x + 45, line_y),
+            (center_x + 230, line_y),
+            2
+        )
+
+        status = self.small_font.render(
+            "MISSION CONTROL",
+            True,
+            (110, 190, 215)
+        )
+
+        self.screen.blit(
+            status,
+            (
+                center_x - status.get_width() // 2,
+                HEIGHT // 2 - 92
+            )
+        )
+
+        # -------------------------------------------------
+        # BUTTONS
+        # -------------------------------------------------
+
+        start_button = pygame.Rect(
+            center_x - 155,
+            HEIGHT // 2 - 45,
+            310,
+            62
+        )
+
+        quit_button = pygame.Rect(
+            center_x - 155,
+            HEIGHT // 2 + 35,
+            310,
+            62
+        )
+
+        start_hover = start_button.collidepoint(mouse_pos)
+        quit_hover = quit_button.collidepoint(mouse_pos)
+
+        # Dark translucent panels
+        start_panel = pygame.Surface(
+            start_button.size, pygame.SRCALPHA
+        )
+        quit_panel = pygame.Surface(
+            quit_button.size, pygame.SRCALPHA
+        )
+
+        start_panel.fill(
+            (20, 100, 135, 210 if start_hover else 165)
+        )
+        quit_panel.fill(
+            (45, 55, 65, 210 if quit_hover else 165)
+        )
+
+        self.screen.blit(start_panel, start_button.topleft)
+        self.screen.blit(quit_panel, quit_button.topleft)
+
+        pygame.draw.rect(
+            self.screen,
+            (90, 210, 245),
+            start_button,
+            2,
+            border_radius=5
+        )
+
+        pygame.draw.rect(
+            self.screen,
+            (120, 135, 145),
+            quit_button,
+            2,
+            border_radius=5
+        )
+
+        start_text = self.font.render(
+            "START GAME", True, WHITE
+        )
+        quit_text = self.font.render(
+            "QUIT", True, (220, 225, 230)
+        )
+
+        self.screen.blit(
+            start_text,
+            (
+                start_button.centerx - start_text.get_width() // 2,
+                start_button.centery - start_text.get_height() // 2
+            )
+        )
+
+        self.screen.blit(
+            quit_text,
+            (
+                quit_button.centerx - quit_text.get_width() // 2,
+                quit_button.centery - quit_text.get_height() // 2
+            )
+        )
+
+        # -------------------------------------------------
+        # CONTROLS / FOOTER
+        # -------------------------------------------------
+
+        controls = self.small_font.render(
+            "ENTER / SPACE  •  START        ESC  •  QUIT",
+            True,
+            (155, 180, 195)
+        )
+
+        self.screen.blit(
+            controls,
+            (
+                center_x - controls.get_width() // 2,
+                HEIGHT - 55
+            )
+        )
+
+        version = self.small_font.render(
+            "SPACE INVASION  •  SYSTEM READY",
+            True,
+            (75, 120, 135)
+        )
+
+        self.screen.blit(
+            version,
+            (
+                25,
+                HEIGHT - 35
+            )
+        )
+
+        pygame.display.flip()
+
     # RESET GAME
-    # =====================================================
 
     def reset_game(self):
 
@@ -508,10 +724,7 @@ class Game:
 
         self.wave_start_time = pygame.time.get_ticks()
 
-
-    # =====================================================
     # CREATE WAVE
-    # =====================================================
 
     def create_wave(self):
 
@@ -573,10 +786,7 @@ class Game:
             SHIP_TYPES
         )
 
-
-    # =====================================================
     # HANDLE EVENTS
-    # =====================================================
 
     def handle_events(self):
 
@@ -589,6 +799,51 @@ class Game:
             if event.type == pygame.QUIT:
 
                 self.running = False
+                continue
+
+            # -----------------------------
+            # START SCREEN
+            # -----------------------------
+
+            if self.start_screen:
+
+                if event.type == pygame.KEYDOWN:
+
+                    if event.key in (pygame.K_RETURN, pygame.K_SPACE):
+
+                        self.start_game()
+
+                    elif event.key == pygame.K_ESCAPE:
+
+                        self.running = False
+
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+
+                    if event.button == 1:
+
+                        start_button = pygame.Rect(
+                            WIDTH // 2 - 140,
+                            HEIGHT // 2 - 10,
+                            280,
+                            65
+                        )
+
+                        quit_button = pygame.Rect(
+                            WIDTH // 2 - 140,
+                            HEIGHT // 2 + 80,
+                            280,
+                            65
+                        )
+
+                        if start_button.collidepoint(event.pos):
+
+                            self.start_game()
+
+                        elif quit_button.collidepoint(event.pos):
+
+                            self.running = False
+
+                continue
 
             # -----------------------------
             # KEYBOARD
@@ -681,22 +936,19 @@ class Game:
                             "enemy_shoot"
                         )
 
-
-    # =====================================================
     # UPDATE
-    # =====================================================
 
     def update(self):
 
-        # =================================================
         # UPDATE BACKGROUND
-        # =================================================
 
         self.background.update()
 
-        # =================================================
+        if self.start_screen:
+
+            return
+
         # WAVE TRANSITION
-        # =================================================
 
         if self.wave_transition:
 
@@ -710,9 +962,7 @@ class Game:
 
             return
 
-        # =================================================
         # NEXT WAVE
-        # =================================================
 
         if (
             len(self.enemies) == 0
@@ -742,9 +992,7 @@ class Game:
 
             return
 
-        # =================================================
         # GAMEPLAY
-        # =================================================
 
         if (
             len(self.enemies) > 0
@@ -901,9 +1149,7 @@ class Game:
 
                         break
 
-        # =================================================
         # EXPLOSIONS
-        # =================================================
 
         for explosion in self.explosions[:]:
 
@@ -915,24 +1161,22 @@ class Game:
                     explosion
                 )
 
-
-    # =====================================================
     # DRAW
-    # =====================================================
 
     def draw(self):
 
-        # =================================================
         # BACKGROUND
-        # =================================================
+
+        if self.start_screen:
+
+            self.draw_start_screen()
+            return
 
         self.background.draw(
             self.screen
         )
 
-        # =================================================
         # ENEMIES
-        # =================================================
 
         for enemy in self.enemies:
 
@@ -940,17 +1184,13 @@ class Game:
                 self.screen
             )
 
-        # =================================================
         # PLAYER
-        # =================================================
 
         self.player.draw(
             self.screen
         )
 
-        # =================================================
         # ENEMY BULLETS
-        # =================================================
 
         for bullet in self.enemy_bullets:
 
@@ -958,9 +1198,7 @@ class Game:
                 self.screen
             )
 
-        # =================================================
         # EXPLOSIONS
-        # =================================================
 
         for explosion in self.explosions:
 
@@ -968,9 +1206,7 @@ class Game:
                 self.screen
             )
 
-        # =================================================
         # HUD
-        # =================================================
 
         self.hud.draw(
             self.screen,
@@ -981,9 +1217,7 @@ class Game:
             self.wave_transition
         )
 
-        # =================================================
         # WAVE TRANSITION
-        # =================================================
 
         if (
             self.wave_transition
@@ -1056,9 +1290,7 @@ class Game:
                 )
             )
 
-        # =================================================
         # GAME OVER
-        # =================================================
 
         if self.game_over:
 
@@ -1109,16 +1341,11 @@ class Game:
                 )
             )
 
-        # =================================================
         # DISPLAY
-        # =================================================
 
         pygame.display.flip()
 
-
-    # =====================================================
     # RUN
-    # =====================================================
 
     def run(self):
 
