@@ -1,12 +1,12 @@
 import pygame
 import random
+import math
 
 from settings import *
 
 from src.entities.player import Player
 from src.entities.enemy import Enemy
 from src.entities.enemy_bullet import EnemyBullet
-from src.entities.explosion import Explosion
 
 from src.core.background import SpaceBackground
 from src.core.hud import HUD
@@ -28,6 +28,321 @@ from src.core.difficulty import (
     get_shoot_interval,
     get_max_shooters
 )
+
+
+# =========================================================
+# ENEMY EXPLOSION
+# =========================================================
+
+class EnemyExplosion:
+
+    def __init__(self, x, y, size=50):
+
+        self.x = x
+        self.y = y
+        self.size = size
+
+        self.age = 0
+        self.duration = 500
+
+        self.finished = False
+
+        self.particles = []
+
+        # Create sparks and debris
+        for _ in range(32):
+
+            angle = random.uniform(
+                0,
+                math.pi * 2
+            )
+
+            speed = random.uniform(
+                1.5,
+                5.5
+            )
+
+            self.particles.append({
+                "x": 0,
+                "y": 0,
+                "vx": math.cos(angle) * speed,
+                "vy": math.sin(angle) * speed,
+                "size": random.uniform(2, 5),
+                "life": random.randint(250, 500),
+                "max_life": 500,
+                "type": random.choice(
+                    ["spark", "debris"]
+                )
+            })
+
+    def update(self):
+
+        self.age += 16
+
+        for particle in self.particles:
+
+            particle["x"] += particle["vx"]
+            particle["y"] += particle["vy"]
+
+            # Slight gravity
+            particle["vy"] += 0.035
+
+            particle["life"] -= 16
+
+        if self.age >= self.duration:
+
+            self.finished = True
+
+    def draw(self, screen):
+
+        progress = min(
+            self.age / self.duration,
+            1
+        )
+
+        center = (
+            int(self.x),
+            int(self.y)
+        )
+
+        # =================================================
+        # INITIAL FLASH
+        # =================================================
+
+        if progress < 0.16:
+
+            flash_progress = (
+                progress / 0.16
+            )
+
+            radius = int(
+                self.size
+                * (
+                    0.15
+                    + flash_progress * 0.45
+                )
+            )
+
+            pygame.draw.circle(
+                screen,
+                (255, 255, 230),
+                center,
+                radius
+            )
+
+        # =================================================
+        # FIREBALL
+        # =================================================
+
+        if progress < 0.65:
+
+            fire_progress = (
+                progress / 0.65
+            )
+
+            radius = int(
+                self.size
+                * (
+                    0.25
+                    + fire_progress * 0.85
+                )
+            )
+
+            # Outer red/orange fire
+            pygame.draw.circle(
+                screen,
+                (230, 45, 10),
+                center,
+                radius
+            )
+
+            # Main orange fire
+            pygame.draw.circle(
+                screen,
+                (255, 100, 15),
+                center,
+                int(radius * 0.82)
+            )
+
+            # Yellow hot area
+            pygame.draw.circle(
+                screen,
+                (255, 185, 35),
+                center,
+                int(radius * 0.58)
+            )
+
+            # White-hot center
+            pygame.draw.circle(
+                screen,
+                (255, 240, 150),
+                center,
+                int(radius * 0.28)
+            )
+
+        # =================================================
+        # SMOKE
+        # =================================================
+
+        if progress > 0.25:
+
+            smoke_progress = (
+                progress - 0.25
+            ) / 0.75
+
+            smoke_progress = max(
+                0,
+                min(smoke_progress, 1)
+            )
+
+            smoke_radius = int(
+                self.size
+                * (
+                    0.35
+                    + smoke_progress * 0.75
+                )
+            )
+
+            smoke_surface = pygame.Surface(
+                (
+                    smoke_radius * 3,
+                    smoke_radius * 3
+                ),
+                pygame.SRCALPHA
+            )
+
+            alpha = int(
+                120
+                * (1 - smoke_progress)
+            )
+
+            # Several overlapping smoke blobs
+            smoke_positions = [
+                (
+                    smoke_radius * 1.5,
+                    smoke_radius * 1.5
+                ),
+                (
+                    smoke_radius * 1.1,
+                    smoke_radius * 1.35
+                ),
+                (
+                    smoke_radius * 1.9,
+                    smoke_radius * 1.3
+                ),
+                (
+                    smoke_radius * 1.5,
+                    smoke_radius * 1.05
+                )
+            ]
+
+            for sx, sy in smoke_positions:
+
+                pygame.draw.circle(
+                    smoke_surface,
+                    (55, 55, 60, alpha),
+                    (
+                        int(sx),
+                        int(sy)
+                    ),
+                    int(smoke_radius * 0.55)
+                )
+
+            screen.blit(
+                smoke_surface,
+                (
+                    int(
+                        self.x
+                        - smoke_radius * 1.5
+                    ),
+                    int(
+                        self.y
+                        - smoke_radius * 1.5
+                        - smoke_progress * 18
+                    )
+                )
+            )
+
+        # =================================================
+        # SPARKS + DEBRIS
+        # =================================================
+
+        for particle in self.particles:
+
+            if particle["life"] <= 0:
+                continue
+
+            life_ratio = (
+                particle["life"]
+                / particle["max_life"]
+            )
+
+            px = int(
+                self.x + particle["x"]
+            )
+
+            py = int(
+                self.y + particle["y"]
+            )
+
+            # ---------------------------------------------
+            # SPARK
+            # ---------------------------------------------
+
+            if particle["type"] == "spark":
+
+                length = (
+                    particle["size"] * 2.5
+                )
+
+                pygame.draw.line(
+                    screen,
+                    (255, 170, 35),
+                    (px, py),
+                    (
+                        int(
+                            px
+                            - particle["vx"]
+                            * length
+                        ),
+                        int(
+                            py
+                            - particle["vy"]
+                            * length
+                        )
+                    ),
+                    max(
+                        1,
+                        int(
+                            particle["size"]
+                        )
+                    )
+                )
+
+            # ---------------------------------------------
+            # DEBRIS
+            # ---------------------------------------------
+
+            else:
+
+                debris_size = max(
+                    2,
+                    int(
+                        particle["size"]
+                        * life_ratio
+                    )
+                )
+
+                pygame.draw.rect(
+                    screen,
+                    (100, 100, 105),
+                    (
+                        px,
+                        py,
+                        debris_size,
+                        debris_size
+                    )
+                )
 
 
 class Game:
@@ -130,7 +445,7 @@ class Game:
             "enemyBlack3"
         )
 
-        self.player = Player()
+        self.player = Player(self.audio)
 
         # =================================================
         # ENEMY SHOOTING TIMER
@@ -159,13 +474,14 @@ class Game:
 
         self.running = True
 
+
     # =====================================================
     # RESET GAME
     # =====================================================
 
     def reset_game(self):
 
-        self.player = Player()
+        self.player = Player(self.audio)
 
         self.wave = 1
 
@@ -191,6 +507,7 @@ class Game:
         self.wave_transition = True
 
         self.wave_start_time = pygame.time.get_ticks()
+
 
     # =====================================================
     # CREATE WAVE
@@ -255,6 +572,7 @@ class Game:
         return formation(
             SHIP_TYPES
         )
+
 
     # =====================================================
     # HANDLE EVENTS
@@ -357,6 +675,12 @@ class Game:
                         self.enemy_bullets.append(
                             EnemyBullet(x, y)
                         )
+
+                        # 🔊 ENEMY SHOOT SOUND
+                        self.audio.play(
+                            "enemy_shoot"
+                        )
+
 
     # =====================================================
     # UPDATE
@@ -474,7 +798,15 @@ class Game:
 
                         self.lives = 0
 
+                        # Mark player as destroyed
+                        self.player.destroyed = True
+
                         self.game_over = True
+
+                        # 🔊 PLAYER DESTROY SOUND
+                        self.audio.play(
+                            "player_destroy"
+                        )
 
                         break
 
@@ -543,9 +875,9 @@ class Game:
                                 enemy
                             )
 
-                            # Explosion
+                            # 💥 CODED ENEMY EXPLOSION
                             self.explosions.append(
-                                Explosion(
+                                EnemyExplosion(
                                     enemy.x
                                     + enemy.width // 2,
 
@@ -557,6 +889,11 @@ class Game:
                                         enemy.height
                                     )
                                 )
+                            )
+
+                            # 🔊 ENEMY DESTROY SOUND
+                            self.audio.play(
+                                "enemy_destroy"
                             )
 
                         # Score
@@ -577,6 +914,7 @@ class Game:
                 self.explosions.remove(
                     explosion
                 )
+
 
     # =====================================================
     # DRAW
@@ -776,6 +1114,7 @@ class Game:
         # =================================================
 
         pygame.display.flip()
+
 
     # =====================================================
     # RUN

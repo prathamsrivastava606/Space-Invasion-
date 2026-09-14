@@ -8,7 +8,7 @@ from src.entities.bullet import Bullet
 
 class Player:
 
-    def __init__(self):
+    def __init__(self, audio=None):
 
         self.width = PLAYER_WIDTH
         self.height = PLAYER_HEIGHT
@@ -17,6 +17,10 @@ class Player:
         self.y = HEIGHT - 100
 
         self.speed = PLAYER_SPEED
+
+        # -------------------------------------------------
+        # PLAYER IMAGES
+        # -------------------------------------------------
 
         self.image = pygame.image.load(
             "assets/images/playerShip1_blue.png"
@@ -27,8 +31,24 @@ class Player:
             (self.width, self.height)
         )
 
+        # Destroyed ship image
+        self.destroyed_image = pygame.image.load(
+            "assets/images/playerShip1_destroyed.png"
+        ).convert_alpha()
+
+        self.destroyed_image = pygame.transform.smoothscale(
+            self.destroyed_image,
+            (self.width, self.height)
+        )
+
+        # Player destruction state
+        self.destroyed = False
+
         self.bullets = []
         self.animation_time = 0
+
+        # Audio manager
+        self.audio = audio
 
         self.engine_particles = [
             self.create_particle()
@@ -102,6 +122,11 @@ class Player:
 
     def update(self):
 
+        # Don't move/update normal player systems
+        # after destruction
+        if self.destroyed:
+            return
+
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT]:
@@ -145,12 +170,19 @@ class Player:
 
     def shoot(self):
 
+        if self.destroyed:
+            return
+
         self.bullets.append(
             Bullet(
                 self.x + self.width // 2 - BULLET_WIDTH // 2,
                 self.y
             )
         )
+
+        # Play sound exactly when the bullet is fired
+        if self.audio:
+            self.audio.play("player_shoot")
 
     # -------------------------------------------------
     # ENGINE FLAMES
@@ -173,10 +205,26 @@ class Player:
                 screen,
                 (0, 210, 255),
                 [
-                    (int(engine_x), int(self.y + self.height * 0.82)),
-                    (int(engine_x + 8), int(self.y + self.height * 0.84)),
-                    (int(engine_x), int(self.y + self.height * 0.82 + length)),
-                    (int(engine_x - 8), int(self.y + self.height * 0.84))
+                    (
+                        int(engine_x),
+                        int(self.y + self.height * 0.82)
+                    ),
+                    (
+                        int(engine_x + 8),
+                        int(self.y + self.height * 0.84)
+                    ),
+                    (
+                        int(engine_x),
+                        int(
+                            self.y
+                            + self.height * 0.82
+                            + length
+                        )
+                    ),
+                    (
+                        int(engine_x - 8),
+                        int(self.y + self.height * 0.84)
+                    )
                 ]
             )
 
@@ -184,10 +232,26 @@ class Player:
                 screen,
                 (220, 250, 255),
                 [
-                    (int(engine_x), int(self.y + self.height * 0.83)),
-                    (int(engine_x + 4), int(self.y + self.height * 0.85)),
-                    (int(engine_x), int(self.y + self.height * 0.82 + length * 0.75)),
-                    (int(engine_x - 4), int(self.y + self.height * 0.85))
+                    (
+                        int(engine_x),
+                        int(self.y + self.height * 0.83)
+                    ),
+                    (
+                        int(engine_x + 4),
+                        int(self.y + self.height * 0.85)
+                    ),
+                    (
+                        int(engine_x),
+                        int(
+                            self.y
+                            + self.height * 0.82
+                            + length * 0.75
+                        )
+                    ),
+                    (
+                        int(engine_x - 4),
+                        int(self.y + self.height * 0.85)
+                    )
                 ]
             )
 
@@ -257,6 +321,23 @@ class Player:
     # -------------------------------------------------
 
     def draw(self, screen):
+
+        # -------------------------------------------------
+        # DESTROYED SHIP
+        # -------------------------------------------------
+
+        if self.destroyed:
+
+            screen.blit(
+                self.destroyed_image,
+                (self.x, self.y)
+            )
+
+            return
+
+        # -------------------------------------------------
+        # NORMAL SHIP
+        # -------------------------------------------------
 
         self.draw_engine_trails(screen)
         self.draw_engine_particles(screen)
